@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrediACC - Registrar Entrega</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,sans-serif}
+        body{background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px}
+        .container{max-width:500px;width:100%;background:white;border-radius:20px;padding:25px;box-shadow:0 20px 40px rgba(0,0,0,0.3)}
+        h1{text-align:center;color:#1a1a2e;margin-bottom:5px}h1 span{color:#f9c74f}
+        p.sub{text-align:center;color:#888;margin-bottom:15px;font-size:0.9rem}
+        label{display:block;font-weight:600;margin:10px 0 3px;font-size:0.9rem}
+        label .req{color:#e63946}
+        input{width:100%;padding:10px;border:2px solid #e0e3eb;border-radius:10px;font-size:0.9rem;outline:none}
+        input:focus{border-color:#f9c74f}
+        .row{display:flex;gap:10px}.row>*{flex:1}
+        .btn{background:#1a1a2e;color:white;border:none;padding:12px;border-radius:10px;font-weight:700;width:100%;margin-top:15px;cursor:pointer}
+        .result{padding:12px;border-radius:8px;margin-top:10px;display:none}
+        .result.ok{border-left:4px solid #2ecc71;background:#f0fff4;display:block}
+        .result.err{border-left:4px solid #e63946;background:#fff0f0;display:block}
+        .back-link{display:block;text-align:center;margin-top:15px;color:#1a1a2e;text-decoration:none;font-weight:600;font-size:0.85rem}
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Credi<span>ACC</span></h1>
+    <p class="sub">Registro de entrega de equipo</p>
+    <label>Nombre y Apellido del cliente <span class="req">*</span></label><input type="text" id="nombre" placeholder="Juan Pérez">
+    <div class="row"><div><label>Modelo <span class="req">*</span></label><input type="text" id="modelo" placeholder="iPhone 15"></div><div><label>Marca <span class="req">*</span></label><input type="text" id="marca" placeholder="Apple"></div></div>
+    <label>N° IMEI <span class="req">*</span></label><input type="text" id="imei" placeholder="123456789012345">
+    <div class="row"><div><label>Fecha de entrega</label><input type="date" id="fechaEntrega"></div><div><label>Día de pago (1-28)</label><input type="number" id="diaPago" min="1" max="28" value="5"></div></div>
+    <div class="row"><div><label>Cuotas <span class="req">*</span></label><input type="number" id="cuotas" min="1" max="10" value="6"></div><div><label>Contado ($)</label><input type="number" id="contado" value="0" step="100"></div></div>
+    <label>Monto total financiado <span class="req">*</span></label><input type="number" id="monto" placeholder="300000" step="100">
+    <button class="btn" id="btnRegistrar">Registrar entrega</button>
+    <div id="resultado" class="result"></div>
+    <a href="index.html" class="back-link">← Volver al inicio</a>
+</div>
+<script>
+    (function(){var s=localStorage.getItem('crediacc_sesion');if(!s){window.location.href='login.html';return;}var d=JSON.parse(s);if(!d.expiracion||new Date().getTime()>d.expiracion){localStorage.removeItem('crediacc_sesion');window.location.href='login.html';}})();
+    var API_URL='https://script.google.com/macros/s/AKfycbzMH-zac8R8F3Q3i98oY3qZH4yJDUbsKHPn5sPebVh0RxCnbAk--8RtSoG8ZcGn4nkN/exec';
+    document.getElementById('btnRegistrar').addEventListener('click',async function(){
+        var n=document.getElementById('nombre').value.trim(),modelo=document.getElementById('modelo').value.trim(),marca=document.getElementById('marca').value.trim(),imei=document.getElementById('imei').value.trim(),fecha=document.getElementById('fechaEntrega').value,dia=document.getElementById('diaPago').value,cuotas=document.getElementById('cuotas').value,contado=document.getElementById('contado').value,monto=document.getElementById('monto').value,rd=document.getElementById('resultado');
+        if(!n||!modelo||!marca||!imei||!cuotas||!monto){rd.className='result err';rd.innerHTML='❌ Completa los campos obligatorios (*).';return;}
+        try{
+            var r=await fetch(API_URL+'?action=registrarEntrega',{method:'POST',body:JSON.stringify({nombre_apellido:n,modelo:modelo,marca:marca,imei:imei,fecha_entrega:fecha||new Date().toISOString(),fecha_acordada_pago:'Día '+dia,cuotas:parseInt(cuotas),contado:parseFloat(contado)||0,monto_total_financiado:parseFloat(monto)})});
+            var d=await r.json();
+            if(d.error){rd.className='result err';rd.innerHTML='❌ '+d.error;return;}
+            rd.className='result ok';rd.innerHTML='✅ Entrega registrada. ID: <strong>'+d.id+'</strong>';
+        }catch(e){rd.className='result err';rd.innerHTML='❌ Error de conexión.';}
+    });
+</script>
+</body>
+</html>

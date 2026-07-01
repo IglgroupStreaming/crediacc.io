@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrediACC - Panel de Control</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,sans-serif}
+        body{background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);min-height:100vh;padding:20px;color:#1a1a2e}
+        .dashboard{max-width:1300px;margin:0 auto}
+        .header{background:#1a1a2e;color:white;padding:20px 25px;border-radius:18px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;box-shadow:0 8px 20px rgba(0,0,0,0.3);flex-wrap:wrap;gap:10px}
+        .header h1{font-size:1.6rem}.header h1 span{color:#f9c74f}
+        .btn{padding:10px 18px;border-radius:10px;font-weight:700;cursor:pointer;border:none;font-size:0.85rem}
+        .btn-yellow{background:#f9c74f;color:#1a1a2e}.btn-green{background:#2ecc71;color:white}.btn-red{background:#e63946;color:white}
+        .btn-sm{padding:6px 12px;border-radius:8px;font-size:0.75rem;cursor:pointer;border:none;font-weight:600}
+        .section{background:white;border-radius:18px;padding:20px;margin-bottom:20px;box-shadow:0 5px 15px rgba(0,0,0,0.1)}
+        .section h2{margin-bottom:15px;font-size:1.1rem;display:flex;align-items:center;gap:10px}
+        .tabs{display:flex;gap:5px;margin-bottom:15px;flex-wrap:wrap}
+        .tab-btn{padding:8px 16px;border-radius:8px;border:2px solid #ddd;background:white;cursor:pointer;font-weight:600;font-size:0.85rem}
+        .tab-btn.active{background:#1a1a2e;color:white;border-color:#1a1a2e}
+        .tab-content{display:none}.tab-content.active{display:block}
+        table{width:100%;border-collapse:collapse;font-size:0.8rem}
+        th,td{padding:10px 6px;text-align:left;border-bottom:1px solid #eee}
+        th{background:#f8f9ff;font-weight:600;white-space:nowrap}
+        .badge{padding:3px 10px;border-radius:12px;font-size:0.7rem;font-weight:600;display:inline-block}
+        .badge-pending{background:#fff3cd;color:#856404}.badge-ok{background:#d4edda;color:#155724}.badge-no{background:#f8d7da;color:#721c24}
+        .empty{text-align:center;padding:30px;color:#888;font-style:italic}
+        .actions{display:flex;gap:4px}
+        .count-badge{background:#f9c74f;color:#1a1a2e;padding:3px 10px;border-radius:15px;font-size:0.8rem;font-weight:700}
+        .user-info{display:flex;align-items:center;gap:10px;font-size:0.85rem}
+        @media(max-width:768px){table{display:block;overflow-x:auto}}
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <div class="header">
+        <h1>Credi<span>ACC</span> · Panel</h1>
+        <div class="user-info">
+            <span id="nombreUsuario" style="opacity:0.9;"></span>
+            <button class="btn btn-yellow" onclick="cargarTodo()">🔄 Actualizar</button>
+            <button class="btn btn-red" onclick="cerrarSesion()">🚪 Salir</button>
+        </div>
+    </div>
+    <div class="tabs">
+        <button class="tab-btn active" onclick="cambiarTab('pendientes')">⏳ Pendientes <span class="count-badge" id="countPendientes">0</span></button>
+        <button class="tab-btn" onclick="cambiarTab('clientes')">📋 Clientes</button>
+        <button class="tab-btn" onclick="cambiarTab('perfiles')">📊 Perfiles</button>
+        <button class="tab-btn" onclick="cambiarTab('entregas')">🚚 Entregas</button>
+        <button class="tab-btn" onclick="cambiarTab('pagos')">💰 Pagos</button>
+    </div>
+    <div id="tab-pendientes" class="tab-content active"><div class="section"><h2>⏳ Solicitudes pendientes</h2><div id="tablaPendientes"></div></div></div>
+    <div id="tab-clientes" class="tab-content"><div class="section"><h2>📋 Todos los clientes</h2><div id="tablaClientes"></div></div></div>
+    <div id="tab-perfiles" class="tab-content"><div class="section"><h2>📊 Perfiles Crediticios</h2><div id="tablaPerfiles"></div></div></div>
+    <div id="tab-entregas" class="tab-content"><div class="section"><h2>🚚 Equipos entregados</h2><div id="tablaEntregas"></div></div></div>
+    <div id="tab-pagos" class="tab-content"><div class="section"><h2>💰 Registro de pagos</h2><div id="tablaPagos"></div></div></div>
+</div>
+<script>
+    (function(){var s=localStorage.getItem('crediacc_sesion');if(!s){window.location.href='login.html';return;}var d=JSON.parse(s);if(!d.expiracion||new Date().getTime()>d.expiracion){localStorage.removeItem('crediacc_sesion');alert('Sesión expirada.');window.location.href='login.html';return;}})();
+    var API_URL='https://script.google.com/macros/s/AKfycbzMH-zac8R8F3Q3i98oY3qZH4yJDUbsKHPn5sPebVh0RxCnbAk--8RtSoG8ZcGn4nkN/exec';
+    function cambiarTab(t){document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});document.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('active');});document.querySelector('[onclick="cambiarTab(\''+t+'\')"]').classList.add('active');document.getElementById('tab-'+t).classList.add('active');}
+    function cerrarSesion(){if(confirm('¿Cerrar sesión?')){localStorage.removeItem('crediacc_sesion');window.location.href='login.html';}}
+    async function aprobarCliente(id,dni){if(!confirm('¿Aprobar cliente?'))return;try{var r=await fetch(API_URL+'?action=aprobarCliente',{method:'POST',body:JSON.stringify({id:id,dni:dni})});var d=await r.json();if(d.error)alert('Error: '+d.error);else{alert('✅ '+d.mensaje+'\nPerfil: '+d.perfil+'\nCuotas máx: '+d.cuotasMaximas);cargarTodo();}}catch(e){alert('Error de conexión');}}
+    async function rechazarCliente(id,dni){if(!confirm('¿Rechazar solicitud?'))return;try{var r=await fetch(API_URL+'?action=rechazarCliente',{method:'POST',body:JSON.stringify({id:id,dni:dni})});var d=await r.json();if(d.error)alert('Error: '+d.error);else{alert('❌ Solicitud rechazada.');cargarTodo();}}catch(e){alert('Error de conexión');}}
+    async function cargarTodo(){
+        var s=JSON.parse(localStorage.getItem('crediacc_sesion'));if(s&&s.usuario)document.getElementById('nombreUsuario').textContent='👤 '+s.usuario.nombre;
+        try{var r=await fetch(API_URL+'?action=pendientes');var p=await r.json();document.getElementById('countPendientes').textContent=p.length;var h='';if(!p.length)h='<div class="empty">No hay pendientes.</div>';else{h='<table><thead><tr><th>ID</th><th>Nombre</th><th>DNI</th><th>Dirección</th><th>Perfil</th><th>Foto Frente</th><th>Foto Anverso</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody>';p.forEach(function(c){var id=c['Id']||c.id||'',dni=c['DNI']||c.dni||'';h+='<tr><td>'+id+'</td><td>'+(c['Nombre y Apellido']||c.nombre||'')+'</td><td>'+dni+'</td><td>'+(c['Dirección como sale en el DNI']||c.direccion||'')+'</td><td><span class="badge badge-pending">'+(c['Perfil Crediticio']||c.perfil||'N/A')+'</span></td><td>'+(c['Foto Dni Frente']?'<a href="'+c['Foto Dni Frente']+'" target="_blank">📷 Ver</a>':'❌')+'</td><td>'+(c['Foto Dni Anverso']?'<a href="'+c['Foto Dni Anverso']+'" target="_blank">📷 Ver</a>':'❌')+'</td><td>'+(c['Fecha Solicitud']?new Date(c['Fecha Solicitud']).toLocaleDateString():'-')+'</td><td class="actions"><button class="btn-sm btn-green" onclick="aprobarCliente(\''+id+'\',\''+dni+'\')">✅</button><button class="btn-sm btn-red" onclick="rechazarCliente(\''+id+'\',\''+dni+'\')">❌</button></td></tr>';});h+='</tbody></table>';}document.getElementById('tablaPendientes').innerHTML=h;}catch(e){}
+        try{var r2=await fetch(API_URL+'?action=clientes');var c=await r2.json();h='';if(!c.length)h='<div class="empty">Sin clientes.</div>';else{h='<table><thead><tr><th>ID</th><th>Nombre</th><th>DNI</th><th>Perfil</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>';c.forEach(function(x){var e=x['Estado']||x.estado||'pendiente',b=e==='aprobado'?'badge-ok':e==='rechazado'?'badge-no':'badge-pending';h+='<tr><td>'+(x['Id']||x.id||'')+'</td><td>'+(x['Nombre y Apellido']||x.nombre||'')+'</td><td>'+(x['DNI']||x.dni||'')+'</td><td>'+(x['Perfil Crediticio']||x.perfil||'')+'</td><td><span class="badge '+b+'">'+e+'</span></td><td>'+(x['Fecha Solicitud']?new Date(x['Fecha Solicitud']).toLocaleDateString():'-')+'</td></tr>';});h+='</tbody></table>';}document.getElementById('tablaClientes').innerHTML=h;}catch(e){}
+        try{var r3=await fetch(API_URL+'?action=perfiles');var pf=await r3.json();h='';if(!pf.length)h='<div class="empty">Sin perfiles.</div>';else{h='<table><thead><tr><th>ID</th><th>Perfil</th><th>Cuotas Permitidas</th></tr></thead><tbody>';pf.forEach(function(x){h+='<tr><td>'+(x['Id']||x.id||'')+'</td><td><strong>'+(x['Perfil Crediticio']||x.perfil||'')+'</strong></td><td>'+(x['Cantidad de Cuotas permitidas y aprobadas']||x.cuotas||'')+' cuotas</td></tr>';});h+='</tbody></table>';}document.getElementById('tablaPerfiles').innerHTML=h;}catch(e){}
+        try{var r4=await fetch(API_URL+'?action=entregas');var e=await r4.json();h='';if(!e.length)h='<div class="empty">Sin entregas.</div>';else{h='<table><thead><tr><th>ID</th><th>Cliente</th><th>Modelo</th><th>Marca</th><th>IMEI</th><th>Cuotas</th><th>Monto</th><th>Fecha</th></tr></thead><tbody>';e.forEach(function(x){h+='<tr><td>'+(x['Id']||x.id||'')+'</td><td>'+(x['Nombre y Apellido']||x.nombre||'')+'</td><td>'+(x['Modelo']||x.modelo||'')+'</td><td>'+(x['Marca']||x.marca||'')+'</td><td>'+(x['N° Imei']||x.imei||'')+'</td><td>'+(x['Cuotas']||x.cuotas||'')+'</td><td>$'+Number(x['Monto total financiado']||x.monto||0).toLocaleString()+'</td><td>'+(x['fecha de Entrega']?new Date(x['fecha de Entrega']).toLocaleDateString():'-')+'</td></tr>';});h+='</tbody></table>';}document.getElementById('tablaEntregas').innerHTML=h;}catch(e){}
+        try{var r5=await fetch(API_URL+'?action=pagos');var pg=await r5.json();h='';if(!pg.length)h='<div class="empty">Sin pagos.</div>';else{h='<table><thead><tr><th>ID Cliente</th><th>Cliente</th><th>Cuota N°</th><th>Faltantes</th><th>Comprobante</th></tr></thead><tbody>';pg.forEach(function(x){h+='<tr><td>'+(x['id']||x.id_cliente||'')+'</td><td>'+(x['Nombre y Apellido']||x.nombre||'')+'</td><td>'+(x['N° Cuotas']||x.numero_cuota||'')+'</td><td><strong>'+(x['Cantidad de Cuotas faltantes']||x.cuotas_faltantes||'')+'</strong></td><td>'+(x['Comprobante de pago']||x.comprobante||'-')+'</td></tr>';});h+='</tbody></table>';}document.getElementById('tablaPagos').innerHTML=h;}catch(e){}
+    }
+    window.addEventListener('load',cargarTodo);setInterval(cargarTodo,30000);
+</script>
+</body>
+</html>
