@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CrediACC - Solicitud de Registro</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif}
+        body{background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:15px}
+        .container{max-width:500px;width:100%;background:#fff;border-radius:20px;box-shadow:0 20px 40px rgba(0,0,0,0.4);overflow:hidden}
+        .header{background:#1a1a2e;color:white;padding:20px;text-align:center}
+        .header h1{font-size:1.8rem}.header h1 span{color:#f9c74f}
+        .content{padding:20px;max-height:60vh;overflow-y:auto}
+        .card{background:#f8f9ff;border-radius:14px;padding:18px;margin-bottom:12px}
+        h3{font-size:1rem;margin-bottom:10px;color:#1a1a2e}
+        label{display:block;font-weight:600;margin:8px 0 3px;font-size:0.85rem;color:#1a1a2e}
+        label .req{color:#e63946}
+        input,select{width:100%;padding:10px;border:2px solid #e0e3eb;border-radius:10px;font-size:0.9rem;outline:none}
+        input:focus,select:focus{border-color:#f9c74f}
+        .file-box{border:2px dashed #ccc;border-radius:10px;padding:12px;text-align:center;cursor:pointer;background:#fafafa;margin-top:5px}
+        .file-box img{max-width:100%;max-height:120px;border-radius:8px;margin-top:8px;display:none}
+        .file-box .ph{color:#888;font-size:0.8rem}
+        .btn{background:#1a1a2e;color:white;border:none;padding:13px;border-radius:10px;font-weight:700;width:100%;margin-top:12px;cursor:pointer;font-size:0.95rem}
+        .btn:disabled{background:#888;cursor:not-allowed}
+        .result{padding:15px;border-radius:10px;margin-top:12px;display:none;border-left:5px solid}
+        .result.ok{border-color:#2ecc71;background:#f0fff4;display:block}
+        .result.err{border-color:#e63946;background:#fff0f0;display:block}
+        .result.load{border-color:#f39c12;background:#fffef5;display:block}
+        .id-box{font-family:monospace;background:#f9c74f;color:#1a1a2e;padding:6px 12px;border-radius:6px;font-weight:bold;display:inline-block}
+        .back-link{display:block;text-align:center;margin-top:15px;color:#1a1a2e;text-decoration:none;font-weight:600;font-size:0.85rem}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header"><h1>Credi<span>ACC</span></h1><p>Solicitud de crédito</p></div>
+    <div class="content">
+        <div class="card">
+            <h3>👤 Datos personales</h3>
+            <label>Nombre y Apellido <span class="req">*</span></label><input type="text" id="nombre" placeholder="Juan Pérez">
+            <label>DNI <span class="req">*</span></label><input type="text" id="dni" placeholder="40123456" maxlength="10">
+            <label>Dirección como figura en el DNI <span class="req">*</span></label><input type="text" id="direccion" placeholder="Av. Corrientes 1234, CABA">
+            <label>Perfil Crediticio</label>
+            <select id="perfil">
+                <option value="">Seleccionar perfil</option>
+                <option value="1.0">1.0 - Excelente (10 cuotas)</option>
+                <option value="0.75">0.75 - Muy bueno (7 cuotas)</option>
+                <option value="0.5">0.5 - Bueno (5 cuotas)</option>
+                <option value="0.25">0.25 - Regular (3 cuotas)</option>
+                <option value="0.0">0.0 - Básico (1 cuota)</option>
+            </select>
+        </div>
+        <div class="card">
+            <h3>📸 Fotos del DNI</h3>
+            <label>Foto DNI - Frente <span class="req">*</span></label>
+            <div class="file-box" id="boxFrente" onclick="document.getElementById('fileFrente').click()"><div class="ph">📷 Tocar para subir foto del frente</div><img id="imgFrente"><input type="file" id="fileFrente" accept="image/*" capture="environment" style="display:none" onchange="preview(this,'imgFrente','boxFrente','frente')"></div>
+            <label>Foto DNI - Anverso <span class="req">*</span></label>
+            <div class="file-box" id="boxAnverso" onclick="document.getElementById('fileAnverso').click()"><div class="ph">📷 Tocar para subir foto del dorso</div><img id="imgAnverso"><input type="file" id="fileAnverso" accept="image/*" capture="environment" style="display:none" onchange="preview(this,'imgAnverso','boxAnverso','anverso')"></div>
+        </div>
+        <button class="btn" id="btnEnviar">Enviar solicitud</button>
+        <div id="resultado" class="result"></div>
+        <a href="index.html" class="back-link">← Volver al inicio</a>
+    </div>
+</div>
+<script>
+    const API_URL='https://script.google.com/macros/s/AKfycbxpcjLyZ9OAg9U35OUfRlsbLvZsPM13JW8xhYgb-9ht3wygtEwJgEK37dh-0fQSSurang/exec';
+    let fotoFrente='',fotoAnverso='';
+    function preview(i,imgId,boxId,tipo){const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=function(e){document.getElementById(imgId).src=e.target.result;document.getElementById(imgId).style.display='block';document.querySelector('#'+boxId+' .ph').style.display='none';if(tipo==='frente')fotoFrente=e.target.result;else fotoAnverso=e.target.result;};r.readAsDataURL(f);}
+    document.getElementById('btnEnviar').addEventListener('click',async()=>{
+        const n=document.getElementById('nombre').value.trim(),d=document.getElementById('dni').value.trim(),dir=document.getElementById('direccion').value.trim(),p=document.getElementById('perfil').value,rd=document.getElementById('resultado');
+        if(!n||!d||!dir){rd.className='result err';rd.innerHTML='❌ Completa todos los campos obligatorios (*).';return;}
+        if(!/^\d{7,8}$/.test(d)){rd.className='result err';rd.innerHTML='❌ El DNI debe contener 7 u 8 dígitos numéricos.';return;}
+        if(!fotoFrente||!fotoAnverso){rd.className='result err';rd.innerHTML='❌ Debes subir ambas fotos del DNI.';return;}
+        rd.className='result load';rd.innerHTML='⏳ Enviando solicitud...';document.getElementById('btnEnviar').disabled=true;
+        try{
+            const r=await fetch(API_URL+'?action=solicitarRegistro',{method:'POST',body:JSON.stringify({nombre_apellido:n,dni:d,direccion_dni:dir,perfil_crediticio:p||'Sin calificar',foto_dni_frente:fotoFrente,foto_dni_anverso:fotoAnverso})});
+            const data=await r.json();
+            if(data.error){rd.className='result err';rd.innerHTML='❌ '+data.error;document.getElementById('btnEnviar').disabled=false;return;}
+            rd.className='result ok';rd.innerHTML='✅ <strong>¡Solicitud enviada!</strong><br>Tu ID: <span class="id-box">'+data.id+'</span><br><small>Guardalo para consultar tu estado.</small>';
+            document.getElementById('btnEnviar').disabled=false;
+        }catch(e){rd.className='result err';rd.innerHTML='❌ Error de conexión.';document.getElementById('btnEnviar').disabled=false;}
+    });
+</script>
+</body>
+</html>
