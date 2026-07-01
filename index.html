@@ -87,12 +87,12 @@
         </a>
     </div>
     <div class="footer">
-        <p>CrediACC © 2026 · <a href="https://docs.google.com/spreadsheets/d/1edMBAlBsy3wp5jwxexHM2w7RP9DtOjLfma8gDDatMnU/edit" target="_blank"></a></p>
+        <p>CrediACC © 2026 · <a href="https://docs.google.com/spreadsheets/d/1edMBAlBsy3wp5jwxexHM2w7RP9DtOjLfma8gDDatMnU/edit" target="_blank">📊 Ver hoja de cálculo</a></p>
         <p style="margin-top:5px;">Sistema conectado a Google Sheets + Apps Script</p>
     </div>
 </div>
 <script>
-    const API_URL='https://script.google.com/macros/s/AKfycbxpcjLyZ9OAg9U35OUfRlsbLvZsPM13JW8xhYgb-9ht3wygtEwJgEK37dh-0fQSSurang/exec';
+    const API_URL='https://script.google.com/macros/s/AKfycbz9Zu8wc8Ueycn1zIdEYSSmOmXiRbteYdEbLl_hXmsKx1X5mn6PemwffGAjqNEPsWDe5g/exec';
     async function verificarConexion(){
         const sd=document.getElementById('statusDot'),st=document.getElementById('statusText'),sm=document.getElementById('statusTime');
         try{const r=await fetch(API_URL);const d=await r.json();if(d.status){sd.className='status-dot online';st.textContent='Sistema conectado';}else{throw new Error('');}}catch(e){sd.className='status-dot offline';st.textContent='Sin conexión';}
