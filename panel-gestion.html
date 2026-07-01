@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CrediACC - Panel de Gestión</title>
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+    * { margin:0; padding:0; box-sizing:border-box; font-family: system-ui, sans-serif; }
     body { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); min-height:100vh; padding:30px 20px; color:#1a1a2e; }
     .dashboard { max-width:1000px; margin:0 auto; }
     .header { background:#1a1a2e; color:white; padding:25px 30px; border-radius:24px; display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; box-shadow:0 10px 25px rgba(0,0,0,0.4); }
@@ -49,7 +49,7 @@
 </div>
 
 <script>
-  const API_URL = 'https://script.google.com/macros/s/AKfycbzMH-zac8R8F3Q3i98oY3qZH4yJDUbsKHPn5sPebVh0RxCnbAk--8RtSoG8ZcGn4nkN/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbw0SdocRdJWh6E7fWxywe3KgQacTBDHHffSybgQWg627URC23hhgQNzzLlgSnzL9QveSg/exec';
 
   async function cargarDatos() {
     // Clientes
@@ -63,8 +63,12 @@
         html = '<table><thead><tr><th>DNI</th><th>Nombre</th><th>Email</th><th>Scoring</th><th>Límite</th><th>Registro</th></tr></thead><tbody>';
         clientes.forEach(c => {
           html += `<tr>
-            <td>${c.dni}</td><td>${c.nombre}</td><td>${c.email}</td><td>${c.scoring}</td>
-            <td>$${Number(c.limite_aprobado).toLocaleString()}</td><td>${new Date(c.created_at).toLocaleString()}</td>
+            <td>${c.dni || c[Object.keys(c)[0]]}</td>
+            <td>${c.nombre || ''}</td>
+            <td>${c.email || ''}</td>
+            <td>${c.scoring || ''}</td>
+            <td>$${Number(c.limite_aprobado || c.limite || 0).toLocaleString()}</td>
+            <td>${c.created_at ? new Date(c.created_at).toLocaleString() : '-'}</td>
           </tr>`;
         });
         html += '</tbody></table>';
@@ -87,8 +91,12 @@
           const estado = e.estado || (e.utilizado === 'true' ? 'entregado' : 'pendiente');
           const badge = estado === 'entregado' ? 'badge-success' : 'badge-warning';
           html += `<tr>
-            <td>${e.token}</td><td>${e.cliente_dni}</td><td>$${Number(e.monto_original).toLocaleString()}</td>
-            <td>${e.cuotas}</td><td>$${Number(e.valor_cuota).toLocaleString()}</td><td>$${Number(e.total_a_pagar).toLocaleString()}</td>
+            <td>${e.token || ''}</td>
+            <td>${e.cliente_dni || ''}</td>
+            <td>$${Number(e.monto_original || e.monto || 0).toLocaleString()}</td>
+            <td>${e.cuotas || ''}</td>
+            <td>$${Number(e.valor_cuota || 0).toLocaleString()}</td>
+            <td>$${Number(e.total_a_pagar || e.total || 0).toLocaleString()}</td>
             <td><span class="badge ${badge}">${estado}</span></td>
             <td>${e.fecha_entrega ? new Date(e.fecha_entrega).toLocaleString() : '-'}</td>
           </tr>`;
