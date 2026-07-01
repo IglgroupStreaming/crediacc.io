@@ -56,7 +56,7 @@
     </div>
 </div>
 <script>
-    const API_URL='https://script.google.com/macros/s/AKfycbxpcjLyZ9OAg9U35OUfRlsbLvZsPM13JW8xhYgb-9ht3wygtEwJgEK37dh-0fQSSurang/exec';
+    const API_URL='https://script.google.com/macros/s/AKfycbz9Zu8wc8Ueycn1zIdEYSSmOmXiRbteYdEbLl_hXmsKx1X5mn6PemwffGAjqNEPsWDe5g/exec';
     const sesion=localStorage.getItem('crediacc_sesion');
     if(sesion){const d=JSON.parse(sesion);if(d.expiracion&&new Date().getTime()<d.expiracion){window.location.href='panel-control.html';}else{localStorage.removeItem('crediacc_sesion');}}
     const loginForm=document.getElementById('loginForm'),btnLogin=document.getElementById('btnLogin'),alertDiv=document.getElementById('alert');
