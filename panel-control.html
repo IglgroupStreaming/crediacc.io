@@ -55,9 +55,8 @@
     <div id="tab-pagos" class="tab-content"><div class="section"><h2>💰 Registro de pagos</h2><div id="tablaPagos"></div></div></div>
 </div>
 <script>
-    // Verificación de sesión
     (function(){const s=localStorage.getItem('crediacc_sesion');if(!s){window.location.href='login.html';return;}const d=JSON.parse(s);if(!d.expiracion||new Date().getTime()>d.expiracion){localStorage.removeItem('crediacc_sesion');alert('Sesión expirada.');window.location.href='login.html';return;}})();
-    const API_URL='https://script.google.com/macros/s/AKfycbxpcjLyZ9OAg9U35OUfRlsbLvZsPM13JW8xhYgb-9ht3wygtEwJgEK37dh-0fQSSurang/exec';
+    const API_URL='https://script.google.com/macros/s/AKfycbz9Zu8wc8Ueycn1zIdEYSSmOmXiRbteYdEbLl_hXmsKx1X5mn6PemwffGAjqNEPsWDe5g/exec';
     function cambiarTab(t){document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));document.querySelector(`[onclick="cambiarTab('${t}')"]`).classList.add('active');document.getElementById('tab-'+t).classList.add('active');}
     function cerrarSesion(){if(confirm('¿Cerrar sesión?')){localStorage.removeItem('crediacc_sesion');window.location.href='login.html';}}
     async function aprobarCliente(id,dni){if(!confirm('¿Aprobar cliente?'))return;try{const r=await fetch(API_URL+'?action=aprobarCliente',{method:'POST',body:JSON.stringify({id,dni})});const d=await r.json();if(d.error)alert('Error: '+d.error);else{alert('✅ '+d.mensaje+'\nPerfil: '+d.perfil+'\nCuotas máx: '+d.cuotasMaximas);cargarTodo();}}catch(e){alert('Error de conexión');}}
