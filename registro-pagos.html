@@ -36,7 +36,7 @@
 </div>
 <script>
     (function(){const s=localStorage.getItem('crediacc_sesion');if(!s){window.location.href='login.html';return;}const d=JSON.parse(s);if(!d.expiracion||new Date().getTime()>d.expiracion){localStorage.removeItem('crediacc_sesion');window.location.href='login.html';}})();
-    const API_URL='https://script.google.com/macros/s/AKfycbxpcjLyZ9OAg9U35OUfRlsbLvZsPM13JW8xhYgb-9ht3wygtEwJgEK37dh-0fQSSurang/exec';
+    const API_URL='https://script.google.com/macros/s/AKfycbz9Zu8wc8Ueycn1zIdEYSSmOmXiRbteYdEbLl_hXmsKx1X5mn6PemwffGAjqNEPsWDe5g/exec';
     document.getElementById('btnRegistrar').addEventListener('click',async()=>{
         const id=document.getElementById('idCliente').value.trim(),n=document.getElementById('nombre').value.trim(),cuota=document.getElementById('numCuota').value,falt=document.getElementById('cuotasFaltantes').value,comp=document.getElementById('comprobante').value.trim(),rd=document.getElementById('resultado');
         if(!id||!n||!cuota||falt===''){rd.className='result err';rd.innerHTML='❌ Completa los campos obligatorios (*).';return;}
