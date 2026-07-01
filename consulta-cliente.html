@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CrediACC - Consulta de Estado</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; font-family: system-ui, sans-serif; }
+    body { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); min-height:100vh; display:flex; justify-content:center; align-items:center; padding:20px; }
+    .container { max-width:500px; width:100%; background:white; border-radius:20px; padding:25px; box-shadow:0 20px 40px rgba(0,0,0,0.3); }
+    h1 { text-align:center; color:#1a1a2e; }
+    h1 span { color:#f9c74f; }
+    p.sub { text-align:center; color:#888; margin-bottom:15px; font-size:0.9rem; }
+    label { display:block; font-weight:600; margin:10px 0 3px; }
+    input { width:100%; padding:10px; border:2px solid #e0e3eb; border-radius:10px; font-size:0.9rem; outline:none; }
+    input:focus { border-color:#f9c74f; }
+    .btn { background:#1a1a2e; color:white; border:none; padding:12px; border-radius:10px; font-weight:700; width:100%; margin-top:10px; cursor:pointer; }
+    .card { background:#f8f9ff; border-radius:12px; padding:15px; margin-top:12px; }
+    .card h3 { margin-bottom:8px; color:#1a1a2e; }
+    .badge { padding:3px 10px; border-radius:12px; font-size:0.75rem; font-weight:600; display:inline-block; }
+    .badge-ok { background:#d4edda; color:#155724; }
+    .badge-pending { background:#fff3cd; color:#856404; }
+    .badge-no { background:#f8d7da; color:#721c24; }
+    .cuotas-bar { background:#e0e3eb; border-radius:10px; height:20px; margin:8px 0; overflow:hidden; }
+    .cuotas-fill { background:#2ecc71; height:100%; border-radius:10px; transition:width 0.5s; }
+    .info-row { display:flex; justify-content:space-between; margin:5px 0; font-size:0.85rem; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Credi<span>ACC</span></h1>
+  <p class="sub">Consulta de estado de cuenta</p>
+  
+  <label>Ingresá tu DNI</label>
+  <input type="text" id="dni" placeholder="40123456">
+  <button class="btn" id="btnConsultar">Consultar</button>
+  <div id="resultado"></div>
+</div>
+
+<script>
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxpcjLyZ9OAg9U35OUfRlsbLvZsPM13JW8xhYgb-9ht3wygtEwJgEK37dh-0fQSSurang/exec';
+  
+  document.getElementById('btnConsultar').addEventListener('click', async () => {
+    const dni = document.getElementById('dni').value.trim();
+    const resDiv = document.getElementById('resultado');
+    
+    if (!dni) {
+      resDiv.innerHTML = '<p style="color:#e63946;text-align:center;">⚠️ Ingresá tu DNI para consultar.</p>';
+      return;
+    }
+    
+    resDiv.innerHTML = '<p style="text-align:center;color:#888;">⏳ Consultando...</p>';
+    
+    try {
+      const resp = await fetch(API_URL + '?action=consultaCuotas&dni=' + dni);
+      const data = await resp.json();
+      
+      if (data.error) {
+        resDiv.innerHTML = '<p style="color:#e63946;text-align:center;">❌ ' + data.error + '</p>';
+        return;
+      }
+      
+      let html = `
+        <div class="card">
+          <h3>👤 ${data.cliente}</h3>
+          <p>Perfil crediticio: <span class="badge badge-ok">${data.perfil}</span></p>
+          <p>Cuotas máximas permitidas: <strong>${data.cuotasMaximas}</strong></p>
+        </div>
+      `;
+      
+      if (data.equipos && data.equipos.length > 0) {
+        data.equipos.forEach(eq => {
+          const pct = eq.cuotasTotales > 0 ? Math.round((eq.cuotasPagadas / eq.cuotasTotales) * 100) : 0;
+          html += `
+            <div class="card">
+              <h3>📱 ${eq.equipo}</h3>
+              <p>Monto financiado: <strong>$${Number(eq.monto).toLocaleString()}</strong></p>
+              <div class="info-row">
+                <span>Cuotas pagadas: ${eq.cuotasPagadas}</span>
+                <span>Total cuotas: ${eq.cuotasTotales}</span>
+              </div>
+              <div class="cuotas-bar">
+                <div class="cuotas-fill" style="width:${pct}%"></div>
+              </div>
+              <div class="info-row">
+                <span>Progreso: ${pct}%</span>
+                <span style="color:${eq.cuotasFaltantes > 0 ? '#e63946' : '#2ecc71'};font-weight:bold;">
+                  ${eq.cuotasFaltantes > 0 ? eq.cuotasFaltantes + ' cuotas faltantes' : '✅ Completado'}
+                </span>
+              </div>
+            </div>
+          `;
+        });
+      } else {
+        html += '<div class="card"><p style="text-align:center;color:#888;">No tenés equipos financiados registrados.</p></div>';
+      }
+      
+      resDiv.innerHTML = html;
+    } catch (e) {
+      resDiv.innerHTML = '<p style="color:#e63946;text-align:center;">❌ Error de conexión con el servidor.</p>';
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CrediACC - Panel de Control</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; font-family: system-ui, sans-serif; }
+    body { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); min-height:100vh; padding:20px; color:#1a1a2e; }
+    .dashboard { max-width:1300px; margin:0 auto; }
+    .header { background:#1a1a2e; color:white; padding:20px 25px; border-radius:18px; display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; box-shadow:0 8px 20px rgba(0,0,0,0.3); }
+    .header h1 { font-size:1.6rem; }
+    .header h1 span { color:#f9c74f; }
+    .btn { padding:10px 18px; border-radius:10px; font-weight:700; cursor:pointer; border:none; font-size:0.85rem; }
+    .btn-yellow { background:#f9c74f; color:#1a1a2e; }
+    .btn-green { background:#2ecc71; color:white; }
+    .btn-red { background:#e63946; color:white; }
+    .btn-sm { padding:6px 12px; border-radius:8px; font-size:0.75rem; cursor:pointer; border:none; font-weight:600; }
+    .section { background:white; border-radius:18px; padding:20px; margin-bottom:20px; box-shadow:0 5px 15px rgba(0,0,0,0.1); }
+    .section h2 { margin-bottom:15px; font-size:1.1rem; display:flex; align-items:center; gap:10px; }
+    .tabs { display:flex; gap:5px; margin-bottom:15px; flex-wrap:wrap; }
+    .tab-btn { padding:8px 16px; border-radius:8px; border:2px solid #ddd; background:white; cursor:pointer; font-weight:600; font-size:0.85rem; }
+    .tab-btn.active { background:#1a1a2e; color:white; border-color:#1a1a2e; }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+    table { width:100%; border-collapse:collapse; font-size:0.8rem; }
+    th, td { padding:10px 6px; text-align:left; border-bottom:1px solid #eee; }
+    th { background:#f8f9ff; font-weight:600; white-space:nowrap; }
+    .badge { padding:3px 10px; border-radius:12px; font-size:0.7rem; font-weight:600; display:inline-block; }
+    .badge-pending { background:#fff3cd; color:#856404; }
+    .badge-ok { background:#d4edda; color:#155724; }
+    .badge-no { background:#f8d7da; color:#721c24; }
+    .empty { text-align:center; padding:30px; color:#888; font-style:italic; }
+    .actions { display:flex; gap:4px; }
+    .count-badge { background:#f9c74f; color:#1a1a2e; padding:3px 10px; border-radius:15px; font-size:0.8rem; font-weight:700; }
+    @media (max-width:768px) {
+      table { display:block; overflow-x:auto; }
+      .header { flex-direction:column; gap:10px; text-align:center; }
+    }
+  </style>
+</head>
+<body>
+<div class="dashboard">
+  <div class="header">
+    <h1>Credi<span>ACC</span> · Panel de Control</h1>
+    <button class="btn btn-yellow" onclick="cargarTodo()">🔄 Actualizar</button>
+  </div>
+  
+  <div class="tabs">
+    <button class="tab-btn active" onclick="cambiarTab('pendientes')">⏳ Pendientes <span class="count-badge" id="countPendientes">0</span></button>
+    <button class="tab-btn" onclick="cambiarTab('clientes')">📋 Clientes</button>
+    <button class="tab-btn" onclick="cambiarTab('perfiles')">📊 Perfiles Crediticios</button>
+    <button class="tab-btn" onclick="cambiarTab('entregas')">🚚 Entregas</button>
+    <button class="tab-btn" onclick="cambiarTab('pagos')">💰 Pagos</button>
+  </div>
+  
+  <!-- Pendientes -->
+  <div id="tab-pendientes" class="tab-content active">
+    <div class="section">
+      <h2>⏳ Solicitudes pendientes de aprobación</h2>
+      <div id="tablaPendientes"></div>
+    </div>
+  </div>
+  
+  <!-- Clientes -->
+  <div id="tab-clientes" class="tab-content">
+    <div class="section">
+      <h2>📋 Todos los clientes registrados</h2>
+      <div id="tablaClientes"></div>
+    </div>
+  </div>
+  
+  <!-- Perfiles -->
+  <div id="tab-perfiles" class="tab-content">
+    <div class="section">
+      <h2>📊 Perfiles Crediticios</h2>
+      <div id="tablaPerfiles"></div>
+    </div>
+  </div>
+  
+  <!-- Entregas -->
+  <div id="tab-entregas" class="tab-content">
+    <div class="section">
+      <h2>🚚 Equipos entregados</h2>
+      <div id="tablaEntregas"></div>
+    </div>
+  </div>
+  
+  <!-- Pagos -->
+  <div id="tab-pagos" class="tab-content">
+    <div class="section">
+      <h2>💰 Registro de pagos</h2>
+      <div id="tablaPagos"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxpcjLyZ9OAg9U35OUfRlsbLvZsPM13JW8xhYgb-9ht3wygtEwJgEK37dh-0fQSSurang/exec';
+  
+  function cambiarTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelector(`[onclick="cambiarTab('${tab}')"]`).classList.add('active');
+    document.getElementById('tab-' + tab).classList.add('active');
+  }
+  
+  async function aprobarCliente(id, dni) {
+    if (!confirm('¿Confirmas la aprobación de este cliente?')) return;
+    try {
+      const resp = await fetch(API_URL + '?action=aprobarCliente', {
+        method: 'POST',
+        body: JSON.stringify({ id, dni })
+      });
+      const data = await resp.json();
+      if (data.error) {
+        alert('Error: ' + data.error);
+      } else {
+        alert('✅ ' + data.mensaje + '\nPerfil: ' + data.perfil + '\nCuotas máximas: ' + data.cuotasMaximas);
+        cargarTodo();
+      }
+    } catch (e) {
+      alert('Error de conexión');
+    }
+  }
+  
+  async function rechazarCliente(id, dni) {
+    if (!confirm('¿Confirmas el rechazo de esta solicitud?')) return;
+    try {
+      const resp = await fetch(API_URL + '?action=rechazarCliente', {
+        method: 'POST',
+        body: JSON.stringify({ id, dni })
+      });
+      const data = await resp.json();
+      if (data.error) {
+        alert('Error: ' + data.error);
+      } else {
+        alert('❌ Solicitud rechazada.');
+        cargarTodo();
+      }
+    } catch (e) {
+      alert('Error de conexión');
+    }
+  }
+  
+  async function cargarTodo() {
+    // Pendientes
+    try {
+      const resp = await fetch(API_URL + '?action=pendientes');
+      const pendientes = await resp.json();
+      document.getElementById('countPendientes').textContent = pendientes.length;
+      let html = '';
+      if (!pendientes.length) {
+        html = '<div class="empty">No hay solicitudes pendientes.</div>';
+      } else {
+        html = '<table><thead><tr><th>ID</th><th>Nombre</th><th>DNI</th><th>Dirección</th><th>Perfil</th><th>Foto Frente</th><th>Foto Anverso</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody>';
+        pendientes.forEach(c => {
+          const id = c['Id'] || c.id || '';
+          const dni = c['DNI'] || c.dni || '';
+          html += `<tr>
+            <td>${id}</td>
+            <td>${c['Nombre y Apellido'] || c.nombre || ''}</td>
+            <td>${dni}</td>
+            <td>${c['Dirección como sale en el DNI'] || c.direccion || ''}</td>
+            <td><span class="badge badge-pending">${c['Perfil Crediticio'] || c.perfil || 'N/A'}</span></td>
+            <td>${c['Foto Dni Frente'] ? '<a href="' + c['Foto Dni Frente'] + '" target="_blank">📷 Ver</a>' : '❌'}</td>
+            <td>${c['Foto Dni Anverso'] ? '<a href="' + c['Foto Dni Anverso'] + '" target="_blank">📷 Ver</a>' : '❌'}</td>
+            <td>${c['Fecha Solicitud'] ? new Date(c['Fecha Solicitud']).toLocaleDateString() : '-'}</td>
+            <td class="actions">
+              <button class="btn-sm btn-green" onclick="aprobarCliente('${id}','${dni}')">✅ Aprobar</button>
+              <button class="btn-sm btn-red" onclick="rechazarCliente('${id}','${dni}')">❌ Rechazar</button>
+            </td>
+          </tr>`;
+        });
+        html += '</tbody></table>';
+      }
+      document.getElementById('tablaPendientes').innerHTML = html;
+    } catch (e) {
+      document.getElementById('tablaPendientes').innerHTML = '<div class="empty">Error al cargar.</div>';
+    }
+    
+    // Clientes
+    try {
+      const resp = await fetch(API_URL + '?action=clientes');
+      const clientes = await resp.json();
+      let html = '';
+      if (!clientes.length) {
+        html = '<div class="empty">No hay clientes registrados.</div>';
+      } else {
+        html = '<table><thead><tr><th>ID</th><th>Nombre</th><th>DNI</th><th>Perfil</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>';
+        clientes.forEach(c => {
+          const estado = c['Estado'] || c.estado || 'pendiente';
+          const claseBadge = estado === 'aprobado' ? 'badge-ok' : estado === 'rechazado' ? 'badge-no' : 'badge-pending';
+          html += `<tr>
+            <td>${c['Id'] || c.id || ''}</td>
+            <td>${c['Nombre y Apellido'] || c.nombre || ''}</td>
+            <td>${c['DNI'] || c.dni || ''}</td>
+            <td>${c['Perfil Crediticio'] || c.perfil || ''}</td>
+            <td><span class="badge ${claseBadge}">${estado}</span></td>
+            <td>${c['Fecha Solicitud'] ? new Date(c['Fecha Solicitud']).toLocaleDateString() : '-'}</td>
+          </tr>`;
+        });
+        html += '</tbody></table>';
+      }
+      document.getElementById('tablaClientes').innerHTML = html;
+    } catch (e) {
+      document.getElementById('tablaClientes').innerHTML = '<div class="empty">Error al cargar.</div>';
+    }
+    
+    // Perfiles
+    try {
+      const resp = await fetch(API_URL + '?action=perfiles');
+      const perfiles = await resp.json();
+      let html = '';
+      if (!perfiles.length) {
+        html = '<div class="empty">No hay perfiles definidos.</div>';
+      } else {
+        html = '<table><thead><tr><th>ID</th><th>Perfil Crediticio</th><th>Cuotas Permitidas</th></tr></thead><tbody>';
+        perfiles.forEach(p => {
+          html += `<tr>
+            <td>${p['Id'] || p.id || ''}</td>
+            <td><strong>${p['Perfil Crediticio'] || p.perfil || ''}</strong></td>
+            <td>${p['Cantidad de Cuotas permitidas y aprobadas'] || p.cuotas || ''} cuotas</td>
+          </tr>`;
+        });
+        html += '</tbody></table>';
+      }
+      document.getElementById('tablaPerfiles').innerHTML = html;
+    } catch (e) {
+      document.getElementById('tablaPerfiles').innerHTML = '<div class="empty">Error al cargar.</div>';
+    }
+    
+    // Entregas
+    try {
+      const resp = await fetch(API_URL + '?action=entregas');
+      const entregas = await resp.json();
+      let html = '';
+      if (!entregas.length) {
+        html = '<div class="empty">No hay entregas registradas.</div>';
+      } else {
+        html = '<table><thead><tr><th>ID</th><th>Cliente</th><th>Modelo</th><th>Marca</th><th>IMEI</th><th>Cuotas</th><th>Monto</th><th>Fecha</th></tr></thead><tbody>';
+        entregas.forEach(e => {
+          html += `<tr>
+            <td>${e['Id'] || e.id || ''}</td>
+            <td>${e['Nombre y Apellido'] || e.nombre || ''}</td>
+            <td>${e['Modelo'] || e.modelo || ''}</td>
+            <td>${e['Marca'] || e.marca || ''}</td>
+            <td>${e['N° Imei'] || e.imei || ''}</td>
+            <td>${e['Cuotas'] || e.cuotas || ''}</td>
+            <td>$${Number(e['Monto total financiado'] || e.monto || 0).toLocaleString()}</td>
+            <td>${e['fecha de Entrega'] ? new Date(e['fecha de Entrega']).toLocaleDateString() : '-'}</td>
+          </tr>`;
+        });
+        html += '</tbody></table>';
+      }
+      document.getElementById('tablaEntregas').innerHTML = html;
+    } catch (e) {
+      document.getElementById('tablaEntregas').innerHTML = '<div class="empty">Error al cargar.</div>';
+    }
+    
+    // Pagos
+    try {
+      const resp = await fetch(API_URL + '?action=pagos');
+      const pagos = await resp.json();
+      let html = '';
+      if (!pagos.length) {
+        html = '<div class="empty">No hay pagos registrados.</div>';
+      } else {
+        html = '<table><thead><tr><th>ID Cliente</th><th>Cliente</th><th>Cuota N°</th><th>Faltantes</th><th>Comprobante</th></tr></thead><tbody>';
+        pagos.forEach(p => {
+          html += `<tr>
+            <td>${p['id'] || p.id_cliente || ''}</td>
+            <td>${p['Nombre y Apellido'] || p.nombre || ''}</td>
+            <td>${p['N° Cuotas'] || p.numero_cuota || ''}</td>
+            <td><strong>${p['Cantidad de Cuotas faltantes'] || p.cuotas_faltantes || ''}</strong></td>
+            <td>${p['Comprobante de pago'] || p.comprobante || '-'}</td>
+          </tr>`;
+        });
+        html += '</tbody></table>';
+      }
+      document.getElementById('tablaPagos').innerHTML = html;
+    } catch (e) {
+      document.getElementById('tablaPagos').innerHTML = '<div class="empty">Error al cargar.</div>';
+    }
+  }
+  
+  window.addEventListener('load', cargarTodo);
+  window.addEventListener('focus', cargarTodo);
+  setInterval(cargarTodo, 30000);
+</script>
+</body>
+</html>

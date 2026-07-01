@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CrediACC - Registrar Pago</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; font-family: system-ui, sans-serif; }
+    body { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); min-height:100vh; display:flex; justify-content:center; align-items:center; padding:20px; }
+    .container { max-width:450px; width:100%; background:white; border-radius:20px; padding:25px; box-shadow:0 20px 40px rgba(0,0,0,0.3); }
+    h1 { text-align:center; color:#1a1a2e; }
+    h1 span { color:#f9c74f; }
+    p.sub { text-align:center; color:#888; margin-bottom:15px; font-size:0.9rem; }
+    label { display:block; font-weight:600; margin:10px 0 3px; font-size:0.9rem; }
+    label .req { color:#e63946; }
+    input { width:100%; padding:10px; border:2px solid #e0e3eb; border-radius:10px; font-size:0.9rem; outline:none; }
+    input:focus { border-color:#f9c74f; }
+    .btn { background:#1a1a2e; color:white; border:none; padding:12px; border-radius:10px; font-weight:700; width:100%; margin-top:15px; cursor:pointer; }
+    .result { padding:12px; border-radius:8px; margin-top:10px; display:none; }
+    .result.ok { border-left:4px solid #2ecc71; background:#f0fff4; display:block; }
+    .result.err { border-left:4px solid #e63946; background:#fff0f0; display:block; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Credi<span>ACC</span></h1>
+  <p class="sub">Registro de pago de cuota</p>
+  
+  <label>ID Cliente <span class="req">*</span></label>
+  <input type="text" id="idCliente" placeholder="CLI-2026-0001">
+  
+  <label>Nombre y Apellido <span class="req">*</span></label>
+  <input type="text" id="nombre" placeholder="Juan Pérez">
+  
+  <label>N° de cuota que paga <span class="req">*</span></label>
+  <input type="number" id="numCuota" min="1" placeholder="3">
+  
+  <label>Cantidad de cuotas faltantes <span class="req">*</span></label>
+  <input type="number" id="cuotasFaltantes" min="0" placeholder="5">
+  
+  <label>Comprobante de pago</label>
+  <input type="text" id="comprobante" placeholder="N° de transferencia o factura">
+  
+  <button class="btn" id="btnRegistrar">Registrar pago</button>
+  <div id="resultado" class="result"></div>
+</div>
+
+<script>
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxpcjLyZ9OAg9U35OUfRlsbLvZsPM13JW8xhYgb-9ht3wygtEwJgEK37dh-0fQSSurang/exec';
+  
+  document.getElementById('btnRegistrar').addEventListener('click', async () => {
+    const idCliente = document.getElementById('idCliente').value.trim();
+    const nombre = document.getElementById('nombre').value.trim();
+    const numCuota = document.getElementById('numCuota').value;
+    const cuotasFaltantes = document.getElementById('cuotasFaltantes').value;
+    const comprobante = document.getElementById('comprobante').value.trim();
+    const resDiv = document.getElementById('resultado');
+    
+    if (!idCliente || !nombre || !numCuota || cuotasFaltantes === '') {
+      resDiv.className = 'result err';
+      resDiv.innerHTML = '❌ Completa todos los campos obligatorios (*).';
+      return;
+    }
+    
+    try {
+      const resp = await fetch(API_URL + '?action=registrarPago', {
+        method: 'POST',
+        body: JSON.stringify({
+          id_cliente: idCliente,
+          nombre_apellido: nombre,
+          numero_cuota: parseInt(numCuota),
+          cuotas_faltantes: parseInt(cuotasFaltantes),
+          comprobante_pago: comprobante
+        })
+      });
+      const data = await resp.json();
+      if (data.error) {
+        resDiv.className = 'result err';
+        resDiv.innerHTML = '❌ ' + data.error;
+        return;
+      }
+      resDiv.className = 'result ok';
+      resDiv.innerHTML = '✅ <strong>Pago registrado correctamente.</strong><br>Cuota N° ' + numCuota + ' - Faltantes: ' + cuotasFaltantes;
+      
+      // Limpiar formulario
+      document.querySelectorAll('input').forEach(i => i.value = '');
+    } catch (e) {
+      resDiv.className = 'result err';
+      resDiv.innerHTML = '❌ Error de conexión con el servidor.';
+    }
+  });
+</script>
+</body>
+</html>
