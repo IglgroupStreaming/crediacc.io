@@ -93,14 +93,37 @@
 </div>
 <script>
     const API_URL='https://script.google.com/macros/s/AKfycbz9Zu8wc8Ueycn1zIdEYSSmOmXiRbteYdEbLl_hXmsKx1X5mn6PemwffGAjqNEPsWDe5g/exec';
+    
     async function verificarConexion(){
-        const sd=document.getElementById('statusDot'),st=document.getElementById('statusText'),sm=document.getElementById('statusTime');
-        try{const r=await fetch(API_URL);const d=await r.json();if(d.status){sd.className='status-dot online';st.textContent='Sistema conectado';}else{throw new Error('');}}catch(e){sd.className='status-dot offline';st.textContent='Sin conexión';}
-        sm.textContent=new Date().toLocaleTimeString();
+        const sd=document.getElementById('statusDot');
+        const st=document.getElementById('statusText');
+        const sm=document.getElementById('statusTime');
+        
+        try {
+            const r = await fetch(API_URL);
+            const d = await r.json();
+            
+            if(d.status) {
+                sd.className='status-dot online';
+                st.textContent='✅ Sistema conectado - ' + d.status;
+            } else {
+                sd.className='status-dot offline';
+                st.textContent='⚠️ Respuesta inesperada: ' + JSON.stringify(d);
+            }
+        } catch(e) {
+            sd.className='status-dot offline';
+            st.textContent='❌ Error: ' + e.message;
+            console.error('Error de conexión:', e);
+        }
+        
+        sm.textContent = new Date().toLocaleTimeString();
     }
+    
     verificarConexion();
-    setInterval(()=>{document.getElementById('statusTime').textContent=new Date().toLocaleTimeString();},30000);
-    setInterval(verificarConexion,120000);
+    setInterval(() => {
+        document.getElementById('statusTime').textContent = new Date().toLocaleTimeString();
+    }, 30000);
+    setInterval(verificarConexion, 120000);
 </script>
 </body>
 </html>
