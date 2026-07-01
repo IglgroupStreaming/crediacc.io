@@ -38,7 +38,7 @@
 </div>
 <script>
     (function(){const s=localStorage.getItem('crediacc_sesion');if(!s){window.location.href='login.html';return;}const d=JSON.parse(s);if(!d.expiracion||new Date().getTime()>d.expiracion){localStorage.removeItem('crediacc_sesion');window.location.href='login.html';}})();
-    const API_URL='https://script.google.com/macros/s/AKfycbxpcjLyZ9OAg9U35OUfRlsbLvZsPM13JW8xhYgb-9ht3wygtEwJgEK37dh-0fQSSurang/exec';
+    const API_URL='https://script.google.com/macros/s/AKfycbz9Zu8wc8Ueycn1zIdEYSSmOmXiRbteYdEbLl_hXmsKx1X5mn6PemwffGAjqNEPsWDe5g/exec';
     document.getElementById('btnRegistrar').addEventListener('click',async()=>{
         const n=document.getElementById('nombre').value.trim(),modelo=document.getElementById('modelo').value.trim(),marca=document.getElementById('marca').value.trim(),imei=document.getElementById('imei').value.trim(),fecha=document.getElementById('fechaEntrega').value,dia=document.getElementById('diaPago').value,cuotas=document.getElementById('cuotas').value,contado=document.getElementById('contado').value,monto=document.getElementById('monto').value,rd=document.getElementById('resultado');
         if(!n||!modelo||!marca||!imei||!cuotas||!monto){rd.className='result err';rd.innerHTML='❌ Completa los campos obligatorios (*).';return;}
