@@ -62,7 +62,7 @@
     </div>
 </div>
 <script>
-    const API_URL='https://script.google.com/macros/s/AKfycbxpcjLyZ9OAg9U35OUfRlsbLvZsPM13JW8xhYgb-9ht3wygtEwJgEK37dh-0fQSSurang/exec';
+    const API_URL='https://script.google.com/macros/s/AKfycbz9Zu8wc8Ueycn1zIdEYSSmOmXiRbteYdEbLl_hXmsKx1X5mn6PemwffGAjqNEPsWDe5g/exec';
     let fotoFrente='',fotoAnverso='';
     function preview(i,imgId,boxId,tipo){const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=function(e){document.getElementById(imgId).src=e.target.result;document.getElementById(imgId).style.display='block';document.querySelector('#'+boxId+' .ph').style.display='none';if(tipo==='frente')fotoFrente=e.target.result;else fotoAnverso=e.target.result;};r.readAsDataURL(f);}
     document.getElementById('btnEnviar').addEventListener('click',async()=>{
