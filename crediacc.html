@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CrediACC - Simulador de Crédito</title>
+  <!-- Librería QR para generar códigos reales -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+    body {
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .app-container {
+      max-width: 450px;
+      width: 100%;
+      background: #ffffff;
+      border-radius: 28px;
+      box-shadow: 0 30px 50px rgba(0,0,0,0.5);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 700px;
+    }
+    .header {
+      background: #1a1a2e;
+      color: white;
+      padding: 25px 20px;
+      text-align: center;
+    }
+    .header h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .header h1 span {
+      color: #f9c74f;
+    }
+    .header p {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      margin-top: 5px;
+    }
+    .tabs {
+      display: flex;
+      background: #f1f3f6;
+      border-bottom: 1px solid #ddd;
+    }
+    .tab {
+      flex: 1;
+      padding: 15px;
+      text-align: center;
+      font-weight: 600;
+      cursor: pointer;
+      color: #555;
+      transition: 0.2s;
+      border-bottom: 3px solid transparent;
+    }
+    .tab.active {
+      color: #1a1a2e;
+      border-bottom-color: #f9c74f;
+      background: white;
+    }
+    .content {
+      padding: 25px 20px;
+      flex: 1;
+      overflow-y: auto;
+    }
+    .screen {
+      display: none;
+    }
+    .screen.active {
+      display: block;
+    }
+    .card {
+      background: #f8f9ff;
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin: 15px 0 5px;
+      color: #1a1a2e;
+    }
+    input, select {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #e0e3eb;
+      border-radius: 14px;
+      font-size: 1rem;
+      outline: none;
+      transition: 0.2s;
+    }
+    input:focus, select:focus {
+      border-color: #f9c74f;
+      box-shadow: 0 0 0 3px rgba(249,199,79,0.2);
+    }
+    .btn {
+      background: #1a1a2e;
+      color: white;
+      border: none;
+      padding: 15px 25px;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 15px;
+      transition: 0.2s;
+      letter-spacing: 0.3px;
+    }
+    .btn:hover {
+      background: #2d2d44;
+    }
+    .btn-secondary {
+      background: #f9c74f;
+      color: #1a1a2e;
+    }
+    .btn-secondary:hover {
+      background: #f7b32b;
+    }
+    .result-box {
+      background: #fff;
+      border-radius: 16px;
+      padding: 20px;
+      margin: 20px 0;
+      border-left: 6px solid #f9c74f;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .result-box.rejected {
+      border-left-color: #e63946;
+    }
+    .qr-container {
+      text-align: center;
+      padding: 15px;
+      background: white;
+      border-radius: 20px;
+      margin: 20px auto;
+      max-width: 220px;
+    }
+    .qr-container canvas {
+      border-radius: 12px;
+    }
+    .token-display {
+      font-family: monospace;
+      font-size: 1.3rem;
+      font-weight: bold;
+      background: #eee;
+      padding: 8px 12px;
+      border-radius: 8px;
+      letter-spacing: 2px;
+    }
+    .warning {
+      color: #e63946;
+      font-size: 0.9rem;
+      margin-top: 5px;
+    }
+    .hidden {
+      display: none;
+    }
+    hr {
+      margin: 20px 0;
+      border: 0.5px solid #eee;
+    }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <div class="header">
+    <h1>Credi<span>ACC</span></h1>
+    <p>Simulador de crédito inmediato</p>
+  </div>
+  <div class="tabs">
+    <div class="tab active" data-tab="cliente">👤 Cliente</div>
+    <div class="tab" data-tab="comercio">🏪 Comercio</div>
+  </div>
+
+  <div class="content">
+    <!-- PANTALLA CLIENTE -->
+    <div id="screen-cliente" class="screen active">
+      <div class="card">
+        <h3 style="margin-bottom:10px;">📋 Registro / Onboarding</h3>
+        <label>DNI</label>
+        <input type="text" id="dniInput" placeholder="Ej: 40123456" maxlength="10">
+        <label>Nombre completo</label>
+        <input type="text" id="nombreInput" placeholder="María García">
+        <label>Email</label>
+        <input type="email" id="emailInput" placeholder="maria@email.com">
+        <button class="btn" id="btnEvaluar">Evaluar y solicitar crédito</button>
+        <div id="onboardingResult" class="result-box hidden"></div>
+      </div>
+
+      <div class="card" id="seccionQR" style="display: none;">
+        <h3>💳 Generar QR de compra</h3>
+        <label>Monto</label>
+        <input type="number" id="montoQR" placeholder="Ej: 45000" min="1">
+        <label>Cuotas</label>
+        <select id="cuotasQR">
+          <option value="1">1 cuota (sin interés)</option>
+          <option value="3">3 cuotas (15% interés)</option>
+          <option value="6">6 cuotas (35% interés)</option>
+        </select>
+        <button class="btn btn-secondary" id="btnGenerarQR">Generar código QR</button>
+        <div id="qrResult" class="hidden"></div>
+      </div>
+    </div>
+
+    <!-- PANTALLA COMERCIO -->
+    <div id="screen-comercio" class="screen">
+      <div class="card">
+        <h3>🛒 Cobrar con QR de CrediACC</h3>
+        <label>Token del QR</label>
+        <input type="text" id="tokenCobro" placeholder="Código de 8 caracteres">
+        <label>Monto a cobrar</label>
+        <input type="number" id="montoCobro" placeholder="Ej: 45000">
+        <p style="font-size:0.8rem; margin-top:5px;">API Key incluida automáticamente.</p>
+        <button class="btn" id="btnCobrar">Cobrar ahora</button>
+        <div id="cobroResult" class="result-box hidden"></div>
+      </div>
+      <div class="card">
+        <p><strong>ℹ️ API Key de prueba:</strong> <code>crediacc-comercio-2025</code></p>
+        <p>En producción, el comercio debe enviar esta clave en el header <em>x-api-key</em>.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // ----- Simulación de base de datos con localStorage -----
+    const STORAGE_CLIENTES = 'crediacc_clientes';
+    const STORAGE_TOKENS = 'crediacc_tokens';
+    const API_KEY_COMERCIO = 'crediacc-comercio-2025';
+
+    function getClientes() {
+      return JSON.parse(localStorage.getItem(STORAGE_CLIENTES) || '{}');
+    }
+    function saveCliente(dni, data) {
+      const clientes = getClientes();
+      clientes[dni] = data;
+      localStorage.setItem(STORAGE_CLIENTES, JSON.stringify(clientes));
+    }
+    function getCliente(dni) {
+      return getClientes()[dni] || null;
+    }
+
+    function getTokens() {
+      return JSON.parse(localStorage.getItem(STORAGE_TOKENS) || '{}');
+    }
+    function saveToken(token, data) {
+      const tokens = getTokens();
+      tokens[token] = data;
+      localStorage.setItem(STORAGE_TOKENS, JSON.stringify(tokens));
+    }
+    function getTokenData(token) {
+      return getTokens()[token] || null;
+    }
+    function markTokenUsed(token) {
+      const tokens = getTokens();
+      if (tokens[token]) {
+        tokens[token].utilizado = true;
+        localStorage.setItem(STORAGE_TOKENS, JSON.stringify(tokens));
+      }
+    }
+
+    // ----- Mocks de servicios externos (igual que el backend) -----
+    function mockKycValidation(dni) {
+      return { valid: true, matchScore: 0.98 };
+    }
+    function mockCreditBureauCheck(dni) {
+      const score = Math.floor(Math.random() * (900 - 300 + 1)) + 300;
+      return { score, tieneDeudas: score < 450 };
+    }
+    function evaluarRiesgoYAsignarLimite(bureauData) {
+      if (bureauData.tieneDeudas) {
+        return { aprobado: false, limite: 0, razon: "Riesgo crediticio elevado por antecedentes." };
+      }
+      let limite = 50000;
+      if (bureauData.score > 750) limite = 250000;
+      else if (bureauData.score > 600) limite = 120000;
+      return { aprobado: true, limite, razon: "Aprobado mediante scoring automático." };
+    }
+
+    // ----- Interfaz y lógica de pantallas -----
+    const tabs = document.querySelectorAll('.tab');
+    const screenCliente = document.getElementById('screen-cliente');
+    const screenComercio = document.getElementById('screen-comercio');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const target = tab.dataset.tab;
+        if (target === 'cliente') {
+          screenCliente.classList.add('active');
+          screenComercio.classList.remove('active');
+        } else {
+          screenComercio.classList.add('active');
+          screenCliente.classList.remove('active');
+        }
+      });
+    });
+
+    // ----- Onboarding -----
+    document.getElementById('btnEvaluar').addEventListener('click', () => {
+      const dni = document.getElementById('dniInput').value.trim();
+      const nombre = document.getElementById('nombreInput').value.trim();
+      const email = document.getElementById('emailInput').value.trim();
+      const resultDiv = document.getElementById('onboardingResult');
+
+      if (!dni || !nombre || !email) {
+        resultDiv.className = 'result-box rejected';
+        resultDiv.innerHTML = '❌ Completa todos los campos.';
+        resultDiv.classList.remove('hidden');
+        return;
+      }
+
+      // Verificar si ya existe
+      if (getCliente(dni)) {
+        resultDiv.className = 'result-box rejected';
+        resultDiv.innerHTML = '⚠️ Este DNI ya está registrado.';
+        resultDiv.classList.remove('hidden');
+        return;
+      }
+
+      // Simular KYC y buró
+      const kyc = mockKycValidation(dni);
+      if (!kyc.valid) {
+        resultDiv.className = 'result-box rejected';
+        resultDiv.innerHTML = '❌ Fallo en validación de identidad (KYC).';
+        resultDiv.classList.remove('hidden');
+        return;
+      }
+
+      const bureau = mockCreditBureauCheck(dni);
+      const evaluacion = evaluarRiesgoYAsignarLimite(bureau);
+
+      if (!evaluacion.aprobado) {
+        resultDiv.className = 'result-box rejected';
+        resultDiv.innerHTML = `❌ <strong>RECHAZADO</strong><br>Motivo: ${evaluacion.razon}`;
+        resultDiv.classList.remove('hidden');
+        // Mostrar igual la sección QR? No, no dejar.
+        document.getElementById('seccionQR').style.display = 'none';
+        return;
+      }
+
+      // Guardar cliente
+      saveCliente(dni, {
+        dni, nombre, email,
+        limite_aprobado: evaluacion.limite,
+        scoring: bureau.score
+      });
+
+      // Mostrar resultado exitoso
+      resultDiv.className = 'result-box';
+      resultDiv.innerHTML = `
+        ✅ <strong>¡Aprobado!</strong><br>
+        Cliente: ${nombre}<br>
+        Scoring: ${bureau.score}<br>
+        Límite asignado: <strong>$${evaluacion.limite.toLocaleString()}</strong><br>
+        <small>${evaluacion.razon}</small>
+      `;
+      resultDiv.classList.remove('hidden');
+
+      // Habilitar sección QR
+      document.getElementById('seccionQR').style.display = 'block';
+      // Autocompletar DNI para QR
+      document.getElementById('montoQR').value = '';
+      document.getElementById('qrResult').classList.add('hidden');
+    });
+
+    // ----- Generar QR -----
+    document.getElementById('btnGenerarQR').addEventListener('click', () => {
+      const dni = document.getElementById('dniInput').value.trim();
+      const monto = parseFloat(document.getElementById('montoQR').value);
+      const cuotas = parseInt(document.getElementById('cuotasQR').value);
+      const qrResult = document.getElementById('qrResult');
+
+      if (!dni || isNaN(monto) || monto <= 0) {
+        qrResult.className = 'result-box rejected';
+        qrResult.innerHTML = '⚠️ Ingresa un monto válido.';
+        qrResult.classList.remove('hidden');
+        return;
+      }
+
+      const cliente = getCliente(dni);
+      if (!cliente) {
+        qrResult.className = 'result-box rejected';
+        qrResult.innerHTML = '❌ Primero debes registrarte y ser aprobado.';
+        qrResult.classList.remove('hidden');
+        return;
+      }
+
+      if (monto > cliente.limite_aprobado) {
+        qrResult.className = 'result-box rejected';
+        qrResult.innerHTML = `❌ El monto supera tu límite de $${cliente.limite_aprobado.toLocaleString()}.`;
+        qrResult.classList.remove('hidden');
+        return;
+      }
+
+      // Generar token único (8 caracteres alfanuméricos)
+      const token = Math.random().toString(36).substring(2, 10).toUpperCase();
+      const interesPlazo = cuotas === 3 ? 1.15 : cuotas === 6 ? 1.35 : 1;
+      const valorCuota = Math.round((monto * interesPlazo) / cuotas);
+      const totalAPagar = Math.round(monto * interesPlazo);
+      const expiraEn = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+
+      // Guardar token
+      saveToken(token, {
+        cliente_dni: dni,
+        monto_original: monto,
+        cuotas,
+        valor_cuota: valorCuota,
+        total_a_pagar: totalAPagar,
+        expira_en: expiraEn,
+        utilizado: false
+      });
+
+      // Mostrar resultado con QR
+      qrResult.className = 'result-box';
+      qrResult.innerHTML = `
+        <div style="text-align:center;">
+          <span class="token-display">${token}</span><br>
+          <small>Válido por 5 minutos</small>
+          <div class="qr-container" id="qrCanvasContainer"></div>
+          <p><strong>Resumen:</strong><br>
+          Monto: $${monto.toLocaleString()}<br>
+          Cuotas: ${cuotas} x $${valorCuota.toLocaleString()}<br>
+          Total a pagar: $${totalAPagar.toLocaleString()}</p>
+          <p style="font-size:0.8rem;">Este código QR puede ser escaneado por el comercio.</p>
+        </div>
+      `;
+      qrResult.classList.remove('hidden');
+
+      // Generar QR real con la librería
+      const qrContainer = document.getElementById('qrCanvasContainer');
+      qrContainer.innerHTML = ''; // limpiar
+      QRCode.toCanvas(document.createElement('canvas'), token, { width: 180 }, (error, canvas) => {
+        if (error) console.error(error);
+        else qrContainer.appendChild(canvas);
+      });
+    });
+
+    // ----- Cobro comercio -----
+    document.getElementById('btnCobrar').addEventListener('click', () => {
+      const token = document.getElementById('tokenCobro').value.trim().toUpperCase();
+      const montoCobrado = parseFloat(document.getElementById('montoCobro').value);
+      const resultDiv = document.getElementById('cobroResult');
+
+      if (!token || isNaN(montoCobrado) || montoCobrado <= 0) {
+        resultDiv.className = 'result-box rejected';
+        resultDiv.innerHTML = '⚠️ Ingresa token y monto válido.';
+        resultDiv.classList.remove('hidden');
+        return;
+      }
+
+      // Simular verificación de API key (siempre válida en este prototipo porque es local)
+      // En un entorno real esto sería header, aquí lo omitimos para simplicidad.
+
+      const tokenData = getTokenData(token);
+      if (!tokenData) {
+        resultDiv.className = 'result-box rejected';
+        resultDiv.innerHTML = '❌ Token inválido.';
+        resultDiv.classList.remove('hidden');
+        return;
+      }
+      if (tokenData.utilizado) {
+        resultDiv.className = 'result-box rejected';
+        resultDiv.innerHTML = '❌ Este token ya fue utilizado.';
+        resultDiv.classList.remove('hidden');
+        return;
+      }
+      if (new Date(tokenData.expira_en) < new Date()) {
+        resultDiv.className = 'result-box rejected';
+        resultDiv.innerHTML = '❌ Token expirado.';
+        resultDiv.classList.remove('hidden');
+        return;
+      }
+      if (montoCobrado !== tokenData.monto_original) {
+        resultDiv.className = 'result-box rejected';
+        resultDiv.innerHTML = `❌ El monto no coincide. Token espera $${tokenData.monto_original}.`;
+        resultDiv.classList.remove('hidden');
+        return;
+      }
+
+      // Marcar como usado
+      markTokenUsed(token);
+      resultDiv.className = 'result-box';
+      resultDiv.innerHTML = `
+        ✅ <strong>Cobro exitoso</strong><br>
+        Cliente: ${tokenData.cliente_dni}<br>
+        Monto: $${tokenData.monto_original.toLocaleString()}<br>
+        Cuotas: ${tokenData.cuotas} x $${tokenData.valor_cuota.toLocaleString()}<br>
+        Total pagado: $${tokenData.total_a_pagar.toLocaleString()}
+      `;
+      resultDiv.classList.remove('hidden');
+    });
+
+    // Cargar cliente existente para comodidad: si hay DNI en el input al cargar, verificar
+    window.addEventListener('load', () => {
+      // Opcional: auto-enfocar
+    });
+  })();
+</script>
+</body>
+</html>
